@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Country · Travel Atlas</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-country">
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="logo">◎</span> Travel Atlas</a>
+    <a class="back" href="index.html">← Back to map</a>
+  </header>
+
+  <main class="country-layout">
+    <section class="hero card">
+      <img id="flag" class="flag" alt="" hidden>
+      <div class="hero-text">
+        <h1 id="cName">Country</h1>
+        <p id="cSub" class="muted"></p>
+      </div>
+      <div class="status-pick" role="radiogroup" aria-label="Travel status">
+        <button data-status="visited">✓ Visited</button>
+        <button data-status="known">◐ Known</button>
+        <button data-status="none">○ Not yet explored</button>
+      </div>
+      <div id="visitedRow" class="visited-row" hidden>
+        <label>Visited on <input id="visitedOn" type="text" placeholder="e.g. Dec 2024, or 2019 & 2023"></label>
+      </div>
+    </section>
+
+    <div class="cols">
+      <div class="col">
+        <section class="card">
+          <h2>Overview</h2>
+          <div id="facts" class="facts"></div>
+          <div id="summary" class="summary muted">Loading summary…</div>
+        </section>
+
+        <section class="card">
+          <h2>Search sources</h2>
+          <form id="searchForm" class="search-form">
+            <input id="q" type="search" placeholder="e.g. visa, best time to visit, street food…" autocomplete="off">
+            <button class="btn primary">Search</button>
+          </form>
+          <div class="chips" id="quickTopics"></div>
+          <div class="ext-links" id="extLinks"></div>
+          <ul id="results" class="results"></ul>
+        </section>
+
+        <section class="card">
+          <h2>Saved sources <span id="srcCount" class="pill"></span></h2>
+          <form id="srcForm" class="src-form">
+            <input id="srcTitle" placeholder="Title" required>
+            <input id="srcUrl" type="url" placeholder="https://…" required>
+            <button class="btn">Add</button>
+          </form>
+          <ul id="sources" class="sources"></ul>
+        </section>
+      </div>
+
+      <div class="col">
+        <section class="card">
+          <h2>Notes <span id="noteCount" class="pill"></span></h2>
+          <form id="noteForm" class="note-form">
+            <input id="noteTitle" placeholder="Title (e.g. Day 2 — Old Town)" required>
+            <textarea id="noteBody" rows="5" placeholder="Write your note…"></textarea>
+            <div class="note-meta">
+              <input id="noteTags" placeholder="Tags, comma separated (food, budget…)">
+              <input id="noteDate" type="date">
+            </div>
+            <div class="btn-row">
+              <button class="btn primary" id="noteSave">Save note</button>
+              <button type="button" class="btn ghost" id="noteCancel" hidden>Cancel edit</button>
+            </div>
+          </form>
+          <input id="noteFilter" class="note-filter" type="search" placeholder="Filter notes…">
+          <div id="notes" class="notes"></div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/storage.js"></script>
+  <script src="js/country.js"></script>
+</body>
+</html>

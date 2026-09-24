@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Travel Atlas</title>
+  <meta name="description" content="A personal world map of countries visited, known and not yet explored.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="page-map">
+  <header class="topbar">
+    <div class="brand"><span class="logo">◎</span> Travel Atlas</div>
+    <div class="search-wrap">
+      <input id="countrySearch" type="search" placeholder="Find a country…" list="countryList" autocomplete="off">
+      <datalist id="countryList"></datalist>
+    </div>
+  </header>
+
+  <main class="map-layout">
+    <section class="map-card">
+      <div class="map-toolbar">
+        <label class="mode">
+          Click a country to
+          <select id="clickMode">
+            <option value="open">open its page</option>
+            <option value="visited">mark Visited</option>
+            <option value="known">mark Known</option>
+            <option value="none">mark Not yet explored</option>
+          </select>
+        </label>
+        <div class="zoom-btns">
+          <button id="zoomIn" title="Zoom in">+</button>
+          <button id="zoomOut" title="Zoom out">−</button>
+          <button id="zoomReset" title="Reset view">⟲</button>
+        </div>
+      </div>
+      <div class="map-wrap">
+        <svg id="map" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World map"></svg>
+        <div id="tooltip" class="tooltip" hidden></div>
+        <div id="mapStatus" class="map-status">Loading map…</div>
+      </div>
+      <div class="legend">
+        <span><i class="sw visited"></i>Visited</span>
+        <span><i class="sw known"></i>Known</span>
+        <span><i class="sw none"></i>Not yet explored</span>
+      </div>
+    </section>
+
+    <aside class="side">
+      <div class="card stats">
+        <div class="stat visited"><b id="nVisited">0</b><span>Visited</span></div>
+        <div class="stat known"><b id="nKnown">0</b><span>Known</span></div>
+        <div class="stat none"><b id="nNone">0</b><span>To explore</span></div>
+        <div class="progress"><div id="progressBar"></div></div>
+        <p class="muted small" id="progressText"></p>
+      </div>
+
+      <div class="card">
+        <div class="tabs" role="tablist">
+          <button class="tab active" data-tab="visited">Visited</button>
+          <button class="tab" data-tab="known">Known</button>
+          <button class="tab" data-tab="notes">With notes</button>
+        </div>
+        <ul id="countryListView" class="clist"></ul>
+      </div>
+
+      <div class="card">
+        <h3>Your data</h3>
+        <p class="muted small">Saved in this browser. Export <code>data.json</code> and commit it to your repo to publish your map for everyone.</p>
+        <div class="btn-row">
+          <button id="exportBtn" class="btn">Export</button>
+          <label class="btn">Import<input id="importFile" type="file" accept="application/json" hidden></label>
+          <button id="resetBtn" class="btn ghost">Reset</button>
+        </div>
+      </div>
+    </aside>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
+  <script src="js/storage.js"></script>
+  <script src="js/map.js"></script>
+</body>
+</html>
