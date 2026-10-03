@@ -7,6 +7,7 @@
   <meta name="description" content="A personal world map of countries visited, known and not yet explored.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body class="page-map">
@@ -37,7 +38,7 @@
         </div>
       </div>
       <div class="map-wrap">
-        <div id="gmap" class="gmap" hidden></div>
+        <div id="lmap" class="lmap" hidden></div>
         <svg id="map" viewBox="0 0 960 500" preserveAspectRatio="xMidYMid meet" role="img" aria-label="World map"></svg>
         <div id="tooltip" class="tooltip" hidden></div>
         <div id="mapStatus" class="map-status">Loading map…</div>
@@ -81,7 +82,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7/dist/d3.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/topojson-client@3/dist/topojson-client.min.js"></script>
-  <script src="js/config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="js/storage.js"></script>
   <script src="js/map.js"></script>
 </body>

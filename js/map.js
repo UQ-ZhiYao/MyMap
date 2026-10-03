@@ -1,13 +1,11 @@
 /* Travel Atlas — world map page
-   Uses Google Maps when an API key is set in js/config.js,
-   otherwise falls back to the built-in (no key needed) SVG map. */
+   Street map: Leaflet + OpenStreetMap (free, no account or key).
+   If Leaflet can't load, falls back to a simple built-in SVG map. */
 const WORLD_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json';
 const COLORS = { visited: '#1f9d74', known: '#e0a02b', none: '#8a94a3' };
 
 const keyOf = f => f.id ? String(f.id) : 'n:' + f.properties.name;
 const pageUrl = f => `country.html?c=${encodeURIComponent(keyOf(f))}&n=${encodeURIComponent(f.properties.name)}`;
-const gKey = () => (typeof GOOGLE_MAPS_API_KEY === 'string' ? GOOGLE_MAPS_API_KEY.trim() : '');
-const hasKey = () => gKey() && gKey() !== 'YOUR_API_KEY';
 
 let features = [];
 let listTab = 'visited';
@@ -24,9 +22,9 @@ let renderer = null;   // { repaint(), focus(feature) }
   features = topojson.feature(world, world.objects.countries).features
     .filter(f => f.properties.name !== 'Antarctica');
 
-  if (hasKey()) {
-    try { await loadGoogle(); renderer = initGoogleMap(); }
-    catch (e) { console.warn('Google Maps unavailable, using built-in map:', e); renderer = initSvgMap(); }
+  if (window.L) {
+    try { renderer = initLeafletMap(); }
+    catch (e) { console.warn('Street map unavailable, using simple map:', e); renderer = initSvgMap(); }
   } else {
     renderer = initSvgMap();
   }
@@ -91,85 +89,71 @@ function handleCountryClick(key, name) {
   refreshSide();
 }
 
-/* ---------- Google Maps renderer ---------- */
-function loadGoogle() {
-  return new Promise((resolve, reject) => {
-    window.__gmReady = resolve;
-    window.gm_authFailure = () => {
-      // Key rejected (wrong key, API not enabled, billing off, or referrer not allowed)
-      const el = document.createElement('div');
-      el.className = 'map-error';
-      el.innerHTML = 'Google Maps rejected the API key. Check the key, that the <b>Maps JavaScript API</b> is enabled, that billing is on, and that this site is in the key\'s allowed referrers. See README.';
-      document.querySelector('.map-card').prepend(el);
-    };
-    const s = document.createElement('script');
-    s.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(gKey())}&v=weekly&loading=async&callback=__gmReady`;
-    s.async = true;
-    s.onerror = () => reject(new Error('Could not load Google Maps script'));
-    document.head.appendChild(s);
-    setTimeout(() => reject(new Error('Google Maps timed out')), 15000);
-  });
-}
-
-function initGoogleMap() {
+/* ---------- Street map renderer: Leaflet + OpenStreetMap (free, no key) ---------- */
+function initLeafletMap() {
   document.getElementById('map').remove();
-  document.querySelector('.zoom-btns').hidden = true;   // Google has its own controls
-  const el = document.getElementById('gmap');
+  document.querySelector('.zoom-btns').hidden = true;   // Leaflet has its own controls
+  const el = document.getElementById('lmap');
   el.hidden = false;
 
-  const map = new google.maps.Map(el, {
-    center: { lat: 20, lng: 15 },
-    zoom: 2, minZoom: 2,
-    streetViewControl: false,
-    mapTypeControl: true,
-    fullscreenControl: true,
-    gestureHandling: 'greedy'
-  });
+  const map = L.map(el, { center: [20, 15], zoom: 2, minZoom: 2, maxZoom: 18, worldCopyJump: true });
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
 
-  // Country shapes as an overlay. IDs are dropped (a few territories share one) and kept as properties.
-  map.data.addGeoJson({
-    type: 'FeatureCollection',
-    features: features.map(f => ({
-      type: 'Feature', geometry: f.geometry,
-      properties: { key: keyOf(f), name: f.properties.name }
-    }))
-  });
-
-  const style = feat => {
-    const st = Store.statusOf(feat.getProperty('key'));
+  const style = f => {
+    const st = Store.statusOf(keyOf(f));
     return {
       fillColor: COLORS[st],
       fillOpacity: st === 'none' ? 0.04 : 0.6,
-      strokeColor: st === 'none' ? '#8a94a3' : '#ffffff',
-      strokeOpacity: st === 'none' ? 0.5 : 0.9,
-      strokeWeight: 0.6,
-      cursor: 'pointer'
+      color: st === 'none' ? '#8a94a3' : '#ffffff',
+      opacity: st === 'none' ? 0.5 : 0.9,
+      weight: 0.7
     };
   };
-  map.data.setStyle(style);
+  // Countries crossing the 180° line (Russia, Fiji…) would draw a streak across a flat map:
+  // keep each ring continuous by letting longitudes run past ±180.
+  const unwrapRing = ring => {
+    let prev = null;
+    return ring.map(([x, y]) => {
+      if (prev !== null) { while (x - prev > 180) x -= 360; while (x - prev < -180) x += 360; }
+      prev = x; return [x, y];
+    });
+  };
+  const unwrap = g => g.type === 'Polygon'
+    ? { type: 'Polygon', coordinates: g.coordinates.map(unwrapRing) }
+    : { type: 'MultiPolygon', coordinates: g.coordinates.map(poly => poly.map(unwrapRing)) };
+  const flat = features.map(f => ({ type: 'Feature', id: f.id, properties: f.properties, geometry: unwrap(f.geometry), src: f }));
 
-  map.data.addListener('mouseover', e => {
-    map.data.revertStyle();
-    map.data.overrideStyle(e.feature, { strokeWeight: 2, strokeColor: '#1d2433', strokeOpacity: 1, fillOpacity: Store.statusOf(e.feature.getProperty('key')) === 'none' ? 0.18 : 0.75 });
-  });
-  map.data.addListener('mousemove', e => {
-    if (e.domEvent) showTip(tipHtml(e.feature.getProperty('key'), e.feature.getProperty('name')), e.domEvent.clientX, e.domEvent.clientY);
-  });
-  map.data.addListener('mouseout', () => { map.data.revertStyle(); hideTip(); });
-  map.data.addListener('click', e => handleCountryClick(e.feature.getProperty('key'), e.feature.getProperty('name')));
+  const layerOf = new Map();
+  const layer = L.geoJSON(flat, {
+    style,
+    onEachFeature(f, lyr) {
+      layerOf.set(f.src, lyr);
+      lyr.on({
+        mouseover: () => lyr.setStyle({ weight: 2, color: '#1d2433', opacity: 1, fillOpacity: Store.statusOf(keyOf(f)) === 'none' ? 0.18 : 0.75 }),
+        mousemove: e => showTip(tipHtml(keyOf(f), f.properties.name), e.originalEvent.clientX, e.originalEvent.clientY),
+        mouseout: () => { layer.resetStyle(lyr); hideTip(); },
+        click: () => handleCountryClick(keyOf(f), f.properties.name)
+      });
+    }
+  }).addTo(map);
 
   return {
-    repaint() { map.data.revertStyle(); map.data.setStyle(style); },
+    repaint() { layer.setStyle(style); },
     focus(f) {
-      const [[w, s], [e, n]] = d3.geoBounds(f);
-      map.fitBounds({ west: w, south: s, east: e, north: n }, 40);
+      const lyr = layerOf.get(f);
+      map.fitBounds(lyr.getBounds(), { padding: [30, 30], maxZoom: 7 });
+      lyr.setStyle({ weight: 3, color: '#1d2433', opacity: 1 });
+      setTimeout(() => layer.resetStyle(lyr), 1800);
     }
   };
 }
 
 /* ---------- Built-in SVG renderer (no API key needed) ---------- */
 function initSvgMap() {
-  const gm = document.getElementById('gmap'); if (gm) gm.remove();
+  const lm = document.getElementById('lmap'); if (lm) lm.remove();
   const svg = d3.select('#map');
   const g = svg.append('g');
   const projection = d3.geoNaturalEarth1().fitExtent([[8, 8], [952, 492]], { type: 'Sphere' });
