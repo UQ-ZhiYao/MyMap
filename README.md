@@ -11,6 +11,20 @@ Plain HTML/CSS/JS, with no build step, so it runs on GitHub Pages as-is.
 3. Go to **Settings → Pages**. Under *Build and deployment*, set **Source: Deploy from a branch**, **Branch: `main` / `(root)`**, then Save.
 4. After about a minute your site is live at `https://<your-username>.github.io/travel-atlas/`.
 
+## Turn on Google Maps
+
+The map works out of the box with a built-in world map. To use Google Maps instead:
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/), create a project and attach a billing account (Google requires one even for free usage).
+2. **APIs & Services → Library**: enable **Maps JavaScript API**.
+3. **APIs & Services → Credentials → Create credentials → API key**.
+4. Restrict the key (important, because it is visible in your site's code):
+   - *Application restrictions*: **Websites**, and add `https://<your-username>.github.io/*`
+   - *API restrictions*: **Maps JavaScript API** only
+5. Open `js/config.js`, replace `YOUR_API_KEY` with your key, and commit.
+
+If the key is missing or Google can't load, the site falls back to the built-in map. If Google rejects the key, a red message appears above the map. Check Google's pricing page for the current free allowance, and consider setting a budget alert in Cloud Console.
+
 ## How to use
 
 - **Map (index.html)**: countries are coloured by status. Drag to pan, scroll or use +/− to zoom, and search to jump to a country.
@@ -35,10 +49,11 @@ index.html        World map
 country.html      Country page (country.html?c=<ISO numeric>&n=<name>)
 css/style.css     Styles (light and dark mode)
 js/storage.js     Data layer: localStorage, export/import, seed from data.json
-js/map.js         Map rendering (D3 + world-atlas)
+js/config.js      Your Google Maps API key goes here
+js/map.js         Map rendering (Google Maps, or built-in D3 map without a key)
 js/country.js     Status, facts, source search, saved sources, notes
 data.json         Published data (starts empty)
 .nojekyll         Tells GitHub Pages to serve files as-is
 ```
 
-External services (all free, no keys): D3, topojson and world-atlas via jsDelivr; REST Countries for facts and flags; the Wikipedia and Wikivoyage APIs for summaries and search.
+External services (free, no keys, apart from the optional Google Maps key): D3, topojson and world-atlas via jsDelivr; REST Countries for facts and flags; the Wikipedia and Wikivoyage APIs for summaries and search.
